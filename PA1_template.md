@@ -5,20 +5,21 @@ output:
     keep_md: true
     toc: TRUE
 ---
-```{r, loadpackages, message=FALSE}
+
+```r
 library(dplyr)    # load the necessary packages
 ```
    
 ## **Loading and preprocessing the data**
 
-```{r, cache=TRUE}
 
+```r
 if (!exists("activity.csv")) {unzip("activity.zip")}      #if the file hasn't been unzipped before, unzip it
 activity <- read.csv("activity.csv", colClasses = c(steps="numeric", date="Date", interval="numeric"))
 ```
 ## **What is mean total number of steps taken per day?**
-```{r, totalSteps}
 
+```r
 totalSteps <- activity %>% 
         group_by(date) %>% 
         filter(!is.na(steps)) %>% 
@@ -28,6 +29,11 @@ hist(totalSteps$total,
      main = "Frequency distribution of total steps per day", 
      xlab = "Total steps",
      col="navajowhite")
+```
+
+![](PA1_template_files/figure-html/totalSteps-1.png)<!-- -->
+
+```r
 meanSteps <- format(mean(totalSteps$total),  big.mark = ",", scientific=FALSE)
 medianSteps <- format(median(totalSteps$total),  big.mark = ",", scientific=FALSE)
 boxplot(totalSteps$total, 
@@ -35,6 +41,8 @@ boxplot(totalSteps$total,
         main="Total steps")
 mtext(paste("The median is", medianSteps, "and the mean is", meanSteps), cex=1.2, side = 1, line = 1)
 ```
+
+![](PA1_template_files/figure-html/totalSteps-2.png)<!-- -->
 
 Above you can see a frequency distribution for total steps taken per day, excluding days where no data was available. Below the histogram is a boxplot showing the median, which in this situation is almost identical to the mean.  
   
@@ -44,7 +52,8 @@ Please note that these are based on the available data, and some days are missin
 
 ## **What is the average daily activity pattern?**
 
-```{r, averageSetps}
+
+```r
 avgIntervals <- activity %>% 
         group_by(interval) %>% 
         filter(!is.na(steps)) %>% 
@@ -62,31 +71,35 @@ plot(x = avgIntervals$interval,
      xaxt="n")
 axis(1, at=seq(0, 2400, by=180), labels = formattedLabels)
 ```
+
+![](PA1_template_files/figure-html/averageSetps-1.png)<!-- -->
 <br>
-`r maxStepsWhen` is the interval with the maximum averaged number of steps (`r maxSteps`).  
+835 is the interval with the maximum averaged number of steps (206.2).  
 This corresponds to the interval from 8:35 to 8:40 AM.
 <p>&nbsp;</p>
 
 ## **Imputing missing values**
-```{r, missingValues}
+
+```r
 NAs <- which(rowSums(is.na(activity)) > 0)
 totalNAs <- format(length(NAs), big.mark=",")        # figure out the number of rows with missing data
 onlyNAs <- activity[NAs,] 
 uniqueDays <- length(unique(onlyNAs$date))           # figure out the number of days with missing data
 ```
 <p>&nbsp;</p>
-The total number of rows with missing values is `r totalNAs` over `r uniqueDays` days.
-Since each day has a maximum of 288 5-minute intervals, and we have a total number of `r totalNAs` 
-intervals over `r uniqueDays` days we know that the maximum number of intervals they could be missing 
+The total number of rows with missing values is 2,304 over 8 days.
+Since each day has a maximum of 288 5-minute intervals, and we have a total number of 2,304 
+intervals over 8 days we know that the maximum number of intervals they could be missing 
 is 288*8=2304 which matches our total.  
   
-So, all of these `r uniqueDays` days are missing all of their intervals with no days 
+So, all of these 8 days are missing all of their intervals with no days 
 missing partial step data in some intervals.  Based on this, I decided that the best way to impute missing values 
 is to use the average values for each interval that we calculated above.
 <p>&nbsp;</p>
 
 
-```{r, imputeValues}
+
+```r
 activityNoNAs <- activity
 
 for (i in NAs){                                 # loop through the data and insert mean values instead of 
@@ -105,6 +118,11 @@ hist(totalStepsNN$total,
      main = "Frequency distribution of total steps per day with imputed values", 
      xlab = "Total steps",
      col="navajowhite")
+```
+
+![](PA1_template_files/figure-html/imputeValues-1.png)<!-- -->
+
+```r
 boxplot(totalStepsNN$total, 
         col="navajowhite", 
         main="Total steps")
@@ -118,12 +136,15 @@ mtext(paste("The mean with imputed values is the same as it was", meanStepsNN),
       line = 2)
 ```
 
+![](PA1_template_files/figure-html/imputeValues-2.png)<!-- -->
+
 As you can see, imputing values did change the median and raised it a little bit, however, the mean remained the same because that the value we used for imputing.
 
 
 ## **Differences in activity between weekdays and weekends**
 
-```{r, weekendDifferences, fig.width=8, fig.height=6, tidy=TRUE}
+
+```r
 activity <- activity %>%                                # add a column with days of the week
         mutate(dayOfWeek=weekdays(activity$date))
 
@@ -177,7 +198,9 @@ axis(1, at=seq(0, 2400, by=180), labels = formattedLabels)
 abline(h=avgWeekendSteps, col="darkorchid")                    # add a line for the average for weekends
 ```
 
+![](PA1_template_files/figure-html/weekendDifferences-1.png)<!-- -->
+
 As you can see, breaking the data up into weekdays and weekends does affect the results. On weekdays 
-the pattern looks different from the weekend. The average number of steps on weekdays is `r avgWeekdaySteps` 
+the pattern looks different from the weekend. The average number of steps on weekdays is 35.34 
 and most activity happens in the mornings, while on weekends the average number of steps is higher at 
-`r avgWeekendSteps` and is more spread out throughout the day.
+43.08 and is more spread out throughout the day.
